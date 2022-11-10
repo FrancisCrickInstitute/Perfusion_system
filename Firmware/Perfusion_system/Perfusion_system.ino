@@ -18,16 +18,7 @@ RotateControl rotate_controller; // The RotateControl class is used to synchrono
 RotateControl rotate_controller2; // The RotateControl class is used to synchronously rotate up to 10 motors.
 int speed_ = 0;
 
-//Fluid global constants
-const int lead_size = 8; // lead size (8mm)
-//const int lead_size = 1; // lead size (1mm)
-const float steps_rev = 3200; // Stepper resolution at 1/16 steps per revolution
-const float syringe_area = 175; 
-float linear_resolution = (lead_size/steps_rev)*syringe_area; //uL/step or mm^3/step
-
-float Volume;
 float flow_rate;
-int steps;
 int steps_s;
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
@@ -82,25 +73,78 @@ void setup()
 
 void loop() 
 { 
-//  speed_ = abs(knob.read()/2);
-//
-//  //Serial.println(speed_);
-//  pump.setMaxSpeed(speed_);
-//  pump2.setMaxSpeed(speed_);
-//
-//  //Serial.println(speed_);
-//  rotate_controller.overrideSpeed(speed_);
-//  rotate_controller2.overrideSpeed(speed_);
-//  
-//  //rotate_controller.rotateAsync(pump, pump_2, pump_3, pump_4);
-//  rotate_controller.rotateAsync(pump);
-//  rotate_controller2.rotateAsync(pump2);
-//
-//  OLED_display();
+  speed_ = abs(knob.read()/4*10);
+  flow_rate = speed_*0.0038;
+
+  pump.setMaxSpeed(speed_);
+  pump2.setMaxSpeed(speed_);
+
+  //Serial.println(speed_);
+  rotate_controller.overrideSpeed(speed_);
+  rotate_controller2.overrideSpeed(speed_);
   
+  rotate_controller.rotateAsync(pump);
+  rotate_controller2.rotateAsync(pump2);
+
+  OLED_display();
+
+}
+
+
+void OLED_display()
+{   
+    display.clearDisplay();
+    display.setTextColor(WHITE);        // Draw white text
+    display.setCursor(0, 0);
+    display.setTextSize(1);
+    display.print(F("Perfusion system"));
+    display.setTextSize(1);
+    display.println();
+    display.println();
+//    display.print(F("Flow rate selected:"));
+//    display.println();
+//    display.setTextSize(1);
+//    display.print(flow_rate);
+//    display.setTextSize(1);
+//    display.println  (F(" mL/min"));
+//    display.print(F("Flow rate dispensed:"));
+//    display.println();
+//    display.print(rotate_controller.getCurrentSpeed()*linear_resolution*60); 
+//    display.println  (F(" uL/min"));
+//    display.print(F("Controller 1:"));
+//    display.println();
+//    display.print(rotate_controller.getCurrentSpeed()); 
+//    display.println  (F(" Steps"));
+//    display.setTextSize(1);
+//    display.print(F("Controller 2:"));
+//    display.println();
+//    display.print(rotate_controller2.getCurrentSpeed()); 
+//    display.println  (F(" Steps"));
+    display.print(F("Flow rate:"));
+    display.print(rotate_controller.getCurrentSpeed()*0.0038);
+    display.setTextSize(1);
+    display.println(F(" mL"));
+    display.display(); 
+}
+
+void read_pushbutton()
+{
+    if (pushbutton.update()) 
+    {
+      if (pushbutton.fallingEdge()) 
+      {
+        state = !state;
+      }
+    } 
+}
+
+void pushbutton_activated()
+{
   read_pushbutton();
   
-  speed_ = abs(knob.read()/2);
+  speed_ = abs(knob.read()/2*10);
+
+  flow_rate = speed_*0.0038;
 
   OLED_display();
  
@@ -116,85 +160,16 @@ void loop()
         
     digitalWrite(Enable, LOW);
     digitalWrite(Enable2, LOW);
-    speed_ = abs(knob.read()/2);
+    
+    speed_ = abs(knob.read()/2*10);
+    flow_rate = speed_*0.0038;
   
-    //Serial.println(speed_);
     pump.setMaxSpeed(speed_);
     pump2.setMaxSpeed(speed_);
     
-    //rotate_controller.rotateAsync(pump, pump_2, pump_3, pump_4);
     rotate_controller.rotateAsync(pump);
     rotate_controller2.rotateAsync(pump2);
   
     OLED_display();
  }
-  
-
-}
-
-int get_speed(float flow_rate)
-{
-  float uL_s = flow_rate/60;
-  int steps_s;
-  steps_s = uL_s*(1/linear_resolution);
-  return steps_s;
-}
-
-int get_steps(int Volume)
-{
-  int linear_displacement = Volume/linear_resolution;
-  return linear_displacement;
-}
-
-float get_volume(int steps)
-{
-  int Volume = steps*linear_resolution;
-  return Volume;
-}
-
-void OLED_display()
-{   
-    display.clearDisplay();
-    display.setTextColor(WHITE);        // Draw white text
-    display.setCursor(0, 0);
-    display.setTextSize(1);
-    display.print(F("Perfusion syste,"));
-    display.setTextSize(1);
-    display.println();
-    display.println();
-    display.print(F("Flow rate selected:"));
-    display.println();
-    display.setTextSize(1);
-    display.print(knob.read());
-    display.setTextSize(1);
-    display.println  (F(" steps"));
-//    display.print(F("Flow rate dispensed:"));
-//    display.println();
-//    display.print(rotate_controller.getCurrentSpeed()*linear_resolution*60); 
-//    display.println  (F(" uL/min"));
-    display.print(F("Controller 1:"));
-    display.println();
-    display.print(rotate_controller.getCurrentSpeed()); 
-    display.println  (F(" Steps"));
-    display.setTextSize(1);
-    display.print(F("Controller 2:"));
-    display.println();
-    display.print(rotate_controller2.getCurrentSpeed()); 
-    display.println  (F(" Steps"));
-//    display.print(F("Volume:"));
-//    display.print(int(Volume));
-//    display.setTextSize(1);
-//    display.println(F(" uL"));
-    display.display(); 
-}
-
-void read_pushbutton()
-{
-    if (pushbutton.update()) 
-    {
-      if (pushbutton.fallingEdge()) 
-      {
-        state = !state;
-      }
-    } 
 }
